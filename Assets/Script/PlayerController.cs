@@ -114,6 +114,15 @@ public class PlayerController : MonoBehaviour
     {
         Debug.Log("คุณชนะแล้ว! เก็บเหรียญครบ");
         // ใส่โค้ดแสดงหน้าจอ Win ตรงนี้ได้
+        moveForce = 0;             // หยุดการควบคุม
+        rb.velocity = Vector3.zero; // หยุดตัวละคร
+
+        // สั่งให้ StoneSpawner หยุดเสกหิน
+        StoneSpawner spawner = FindObjectOfType<StoneSpawner>();
+        if (spawner != null)
+        {
+            spawner.StopSpawning();
+        }
     }
 
     void GameOver()
