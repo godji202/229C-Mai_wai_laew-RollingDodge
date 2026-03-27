@@ -1,6 +1,7 @@
 using UnityEngine;
-using UnityEngine.UI; // สำหรับใช้รูปหัวใจ
-using TMPro;           // สำหรับใช้ TextMeshPro คะแนน
+using UnityEngine.UI; 
+using TMPro;           
+using UnityEngine.SceneManagement; // สั่งเพิ่มบรรทัดนี้เพื่อใช้จัดการเปลี่ยนฉาก
 
 public class PlayerController : MonoBehaviour
 {
@@ -11,23 +12,20 @@ public class PlayerController : MonoBehaviour
     public Transform cam;
 
     [Header("UI References")]
-    public TextMeshProUGUI scoreText; // ลาก ScoreText มาใส่
-    public Image[] heartImages;      // ลาก Heart1, 2, 3 มาใส่
+    public TextMeshProUGUI scoreText; 
+    public Image[] heartImages;      
 
     [Header("Game Stats")]
-    public int coinsCollected = 0;   // นับจำนวนเหรียญที่เก็บได้
-    public int targetCoins = 20;     // เป้าหมายคือ 20 เหรียญ
-    public int health = 3;           // เลือด 3 ดวง
-    public AudioClip coinSound;      // ไฟล์เสียงเหรียญ
+    public int coinsCollected = 0;   
+    public int targetCoins = 20;     
+    public int health = 3;           
+    public AudioClip coinSound;      
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        
-        // ถ้าไม่ได้ลากกล้องใส่ มันจะหากล้องหลักให้เอง
         if (cam == null && Camera.main != null) cam = Camera.main.transform;
-        
-        UpdateUI(); // อัปเดตหน้าจอตอนเริ่มเกม
+        UpdateUI(); 
     }
 
     void FixedUpdate()
@@ -55,7 +53,6 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // --- 1. เก็บเหรียญ ---
         if (other.CompareTag("Coin"))
         {
             if (coinSound != null)
@@ -63,7 +60,7 @@ public class PlayerController : MonoBehaviour
                 AudioSource.PlayClipAtPoint(coinSound, other.transform.position);
             }
 
-            coinsCollected += 1; // เพิ่มทีละ 1 เหรียญ
+            coinsCollected += 1; 
             Destroy(other.gameObject);
             UpdateUI();
 
@@ -73,14 +70,13 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // --- 2. โดนหิน (Trigger ทะลุผ่านได้) ---
         if (other.CompareTag("Stone"))
         {
             if (health > 0)
             {
-                health -= 1; // ลดเลือดทีละ 1
+                health -= 1; 
                 UpdateUI();
-                Destroy(other.gameObject); // ให้หินหายไปทันทีที่โดนตัวเรา
+                Destroy(other.gameObject); 
                 Debug.Log("โอ๊ย! โดนหินทับ หัวใจเหลือ: " + health);
             }
 
@@ -93,36 +89,44 @@ public class PlayerController : MonoBehaviour
 
     void UpdateUI()
     {
-        // อัปเดตตัวเลขคะแนน
         if (scoreText != null)
         {
             scoreText.text = "Coins: " + coinsCollected + " / " + targetCoins;
         }
 
-        // อัปเดตหัวใจ (วนลูปเช็คว่าต้องแสดงกี่ดวง)
         for (int i = 0; i < heartImages.Length; i++)
         {
             if (i < health) {
-                heartImages[i].enabled = true;  // แสดงหัวใจ
+                heartImages[i].enabled = true;  
             } else {
-                heartImages[i].enabled = false; // ซ่อนหัวใจ
+                heartImages[i].enabled = false; 
             }
         }
     }
 
+    // --- แก้ไขฟังก์ชัน WinGame ตรงนี้ ---
     void WinGame()
     {
-        Debug.Log("คุณชนะแล้ว! เก็บเหรียญครบ");
-        // ใส่โค้ดแสดงหน้าจอ Win ตรงนี้ได้
-        moveForce = 0;             // หยุดการควบคุม
-        rb.velocity = Vector3.zero; // หยุดตัวละคร
+        Debug.Log("คุณชนะแล้ว! เก็บเหรียญครบ กำลังไปหน้า Credits...");
+        
+        moveForce = 0;             
+        rb.velocity = Vector3.zero; 
 
-        // สั่งให้ StoneSpawner หยุดเสกหิน
         StoneSpawner spawner = FindObjectOfType<StoneSpawner>();
         if (spawner != null)
         {
             spawner.StopSpawning();
         }
+
+        // เพิ่มบรรทัดนี้: รอ 2 วินาทีแล้วไปหน้า Credits
+        Invoke("GoToCredits", 2f); 
+    }
+
+    // เพิ่มฟังก์ชันสำหรับวาร์ปไปฉาก Credits
+    void GoToCredits()
+    {
+        // ตรวจสอบให้แน่ใจว่าใน Build Settings มี Scene ชื่อ "Credits" แล้ว
+        SceneManager.LoadScene("Credits");
     }
 
     void GameOver()
@@ -131,12 +135,10 @@ public class PlayerController : MonoBehaviour
         moveForce = 0;
         rb.velocity = Vector3.zero;
 
-        // --- เพิ่ม 2 บรรทัดนี้ลงไป ---
         Debug.Log("จะเริ่มใหม่ใน 2 วินาที...");
-        Invoke("DoRestart", 2f); // รอ 2 วินาทีค่อยเรียกใช้ฟังก์ชัน DoRestart
+        Invoke("DoRestart", 2f); 
     }
 
-    // สร้างฟังก์ชันนี้ไว้ใต้ GameOver
     void DoRestart()
     {
         GameRestarter restarter = GetComponent<GameRestarter>();
